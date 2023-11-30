@@ -4,6 +4,9 @@ This is a simple python script that automates batch testing for Columbia Univers
 
 Unlike the existing testing script, it runs tests concurrently when possible. As a result, it's much faster. (On the order of 25x to 50x for a normal testing load)
 
+![Demo Gif](https://raw.githubusercontent.com/blake116th/4113-batch-tester/main/demo.gif)
+
+
 ## Usage
 
 You'll only need python3 to run this script. There are no additional dependencies.
