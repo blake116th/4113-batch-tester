@@ -68,7 +68,7 @@ class TestState:
     count_lock: Lock  # mutex over stdout
     total_runs: int
     total_successes: int
-    log_files: list[str] # a list of log files kept for failed tests.
+    log_files: list[str]  # a list of log files kept for failed tests.
 
     def __init__(self, assignment_name: str, test_name: str):
         self.test_name = test_name
@@ -142,10 +142,12 @@ def run_test(assignment_name: str, test_name: str):
         t.join()
 
     if state.log_files:
-        print(f'\n {YELLOW}{BOLD}Saved {len(state.log_files)} logs from failed tests:{RESET}')
+        print(
+            f"\n {YELLOW}{BOLD}Saved {len(state.log_files)} logs from failed tests:{RESET}"
+        )
         for log in state.log_files:
-            print(f' {log}')
-        print('') # print newline
+            print(f" {log}")
+        print("")  # print newline
 
 
 def do_job(job_num: int, state: TestState):
@@ -178,7 +180,9 @@ def do_job(job_num: int, state: TestState):
         state.announce_result(success)
         state.change_state(job_num, JobState.PASSED)
     else:
-        logfile_name = f"{state.test_name}-{state.assignment_name}-job{job_num}-failure.log"
+        logfile_name = (
+            f"{state.test_name}-{state.assignment_name}-job{job_num}-failure.log"
+        )
         should_save_log = state.announce_result(success, logfile_name)
         state.change_state(job_num, JobState.FAILED)
 
