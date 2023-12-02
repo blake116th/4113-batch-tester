@@ -27,6 +27,10 @@ FORCE_SEQ = []
 # Argument for `go test -timeout.` If you'd like to be extra cautious about the performance of your code, you can reduce this.
 TIMEOUT = "2m"
 
+# This script saves the logs of failing tests to disk. This is max number of failing jobs for which the logs will be saved.
+# MAX_LOGFILES = NUM_EXECUTIONS will save all logs
+MAX_LOGFILES = 5
+
 # --------------------------------
 
 # --- ANSI CODES ---
@@ -64,6 +68,7 @@ class TestState:
     count_lock: Lock  # mutex over stdout
     total_runs: int
     total_successes: int
+    log_files: list[str] # a list of log files kept for failed tests.
 
     def __init__(self, assignment_name: str, test_name: str):
         self.test_name = test_name
@@ -77,6 +82,7 @@ class TestState:
         self.count_lock = Lock()
         self.total_runs = 0
         self.total_successes = 0
+        self.log_files = []
 
     def change_state(self, job_id: int, state: JobState):
         self.stdout_lock.acquire()
@@ -104,12 +110,16 @@ class TestState:
 
         self.stdout_lock.release()
 
-    # job tells state result
-    def announce_result(self, success: bool):
+    # job tells state result. Return true if we should save the logfile to disk
+    def announce_result(self, success: bool, log=None) -> bool:
         with self.count_lock:
             self.total_runs += 1
             if success:
                 self.total_successes += 1
+            if log and len(self.log_files) < MAX_LOGFILES:
+                self.log_files.append(log)
+                return True
+        return False
 
 
 # run one of N tests associated with an assignment, NUM_EXECUTIONS times
@@ -130,6 +140,12 @@ def run_test(assignment_name: str, test_name: str):
 
     for t in threads:
         t.join()
+
+    if state.log_files:
+        print(f'\n {YELLOW}{BOLD}Saved {len(state.log_files)} logs from failed tests:{RESET}')
+        for log in state.log_files:
+            print(f' {log}')
+        print('') # print newline
 
 
 def do_job(job_num: int, state: TestState):
@@ -157,17 +173,18 @@ def do_job(job_num: int, state: TestState):
     output, _ = process.communicate()
 
     success = process.returncode == 0
-    state.announce_result(success)
 
     if success:
+        state.announce_result(success)
         state.change_state(job_num, JobState.PASSED)
     else:
+        logfile_name = f"{state.test_name}-{state.assignment_name}-job{job_num}-failure.log"
+        should_save_log = state.announce_result(success, logfile_name)
         state.change_state(job_num, JobState.FAILED)
 
-        with open(
-            f"{state.test_name}-{state.assignment_name}-job{job_num}-failure.log", "w"
-        ) as f:
-            f.write(filter_garbage(output))
+        if should_save_log:
+            with open(logfile_name, "w") as f:
+                f.write(filter_garbage(output))
 
     state.sem.release()
 

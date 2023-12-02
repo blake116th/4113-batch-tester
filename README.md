@@ -1,4 +1,4 @@
-# Blake's 4133 Batch Tester
+# Blake's 4113 Batch Tester
 
 This is a simple python script that automates batch testing for Columbia University's COMS4113 Distributed Systems.
 
