@@ -31,6 +31,12 @@ TIMEOUT = "2m"
 # MAX_LOGFILES = NUM_EXECUTIONS will save all logs
 MAX_LOGFILES = 5
 
+# By default this script staggers the starts of each test.
+# This evens out CPU and memory spikes and makes your test behave a little more like it would while running sequentially.
+# Additionally, it makes the UX a little more intuitive.
+# This setting disables that behavior, instead launching NUM_CONCURRENT tests as quickly as possible.
+TURBO_MODE = False
+
 # --------------------------------
 
 # --- ANSI CODES ---
@@ -134,9 +140,10 @@ def run_test(assignment_name: str, test_name: str):
         t.start()
 
     for _ in range(1 if force_seq else NUM_CONCURRENT):
-        # stagger the process starts, so they don't all start and finish together
         state.sem.release()
-        time.sleep(abs(random.gauss(0.1, 0.025)))
+        if not TURBO_MODE:
+            # stagger the process starts, so they don't all start and finish together
+            time.sleep(abs(random.gauss(0.1, 0.025)))
 
     for t in threads:
         t.join()
@@ -187,7 +194,7 @@ def do_job(job_num: int, state: TestState):
         state.change_state(job_num, JobState.FAILED)
 
         if should_save_log:
-            with open(logfile_name, "w") as f:
+            with open(logfile_name, "w+") as f:
                 f.write(filter_garbage(output))
 
     state.sem.release()
