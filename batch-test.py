@@ -35,6 +35,8 @@ MAX_LOGFILES = 5
 # This evens out CPU and memory spikes and makes your test behave a little more like it would while running sequentially.
 # Additionally, it makes the UX a little more intuitive.
 # This setting disables that behavior, instead launching NUM_CONCURRENT tests as quickly as possible.
+# This doesn't seem to make things much faster since tests are compute-bound with high NUM_CONCURRENT and mere mortal hardware.
+# But oh boy does it look fast!
 TURBO_MODE = False
 
 # --------------------------------
