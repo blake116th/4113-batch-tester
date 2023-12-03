@@ -167,8 +167,7 @@ def do_job(job_num: int, state: TestState):
         return
 
     # navigate to the correct directory for the assignment
-    # run go test on test_name, timing out after 2 minutes
-    # redirect output to a log file
+    # run go test on test_name, timing out after amount specified in config
     command = f'cd src/{state.assignment_name} && go test -run "^{state.test_name}$" -timeout {TIMEOUT}'
 
     state.change_state(job_num, JobState.RUNNING)
